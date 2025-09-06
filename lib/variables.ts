@@ -1,13 +1,8 @@
 // Appwrite Configuration
 export const APPWRITE_ENDPOINT = 'https://fra.cloud.appwrite.io/v1';
 export const APPWRITE_PROJECT_ID = '68b8245700358388fd64';
-
-// Database IDs
-export const DB_PORTFOLIO = 'portfolio';
-export const DB_PORTFOLIO_ID = '68b8266e001d4f873a52';
-
-// Table IDs
-export const COL_APPS = 'apps';
-export const COL_PROFILE = 'profile';
-export const COL_MESSAGES = 'messages';
-export const COL_BLOGS = 'blogs';
+export const APPWRITE_DATABASE_ID = "68bc4d0a003dd90b13a0"
+export const APPWRITE_APP_STORE_TABLE_ID = "app_store"
+export const APPWRITE_PROFILE_TABLE_ID = "profile"
+export const APPWRITE_MESSAGES_TABLE_ID = "messages"
+export const APPWRITE_BLOGS_TABLE_ID = "blogs"
