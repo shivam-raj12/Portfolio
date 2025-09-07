@@ -123,6 +123,7 @@ export default function BlogContentRenderer({content}: BlogContentRendererProps)
 
                 case 'paragraph':
                     const paragraphText = safeString(block.text, 'Empty paragraph')
+                    const parts = paragraphText.split(/(`[^`]+`)/g);
                     return (
                         <motion.p
                             key={index}
@@ -131,7 +132,19 @@ export default function BlogContentRenderer({content}: BlogContentRendererProps)
                             transition={{duration: 0.5, delay: animationDelay}}
                             className="text-gray-300 leading-relaxed mb-6 text-base sm:text-lg"
                         >
-                            {paragraphText}
+                            {parts.map((part, i) => {
+                                if (part.startsWith("`") && part.endsWith("`")) {
+                                    return (
+                                        <code
+                                            key={i}
+                                            className="inline-block px-2 py-1 bg-dark-800 text-gray-200 rounded-md text-sm font-mono border border-dark-700"
+                                        >
+                                            {part.slice(1, -1)} {/* remove backticks */}
+                                        </code>
+                                    );
+                                }
+                                return <span key={i}>{part}</span>;
+                            })}
                         </motion.p>
                     )
 
