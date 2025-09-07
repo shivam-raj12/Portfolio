@@ -89,7 +89,7 @@ export default function Blogs() {
                         {[1, 2, 3].map((i) => (
                             <div key={i}
                                  className="bg-dark-800/50 rounded-xl overflow-hidden border border-dark-700 h-full flex flex-col animate-pulse">
-                                <div className="h-48 bg-dark-700/50"/>
+                                <div className="w-full bg-dark-700/50" style={{ aspectRatio: '1200/600' }}/>
                                 <div className="p-6 flex-1 flex flex-col">
                                     <div className="h-6 bg-dark-700/50 rounded mb-2"/>
                                     <div className="h-4 bg-dark-700/50 rounded mb-4"/>
@@ -139,7 +139,8 @@ export default function Blogs() {
                                 <div
                                     className="bg-dark-800/50 rounded-xl overflow-hidden border border-dark-700 hover:border-primary-500/30 transition-all duration-300 card-hover h-full flex flex-col">
                                     <div
-                                        className="relative h-48 bg-gradient-to-br from-primary-900/20 to-accent-900/20 overflow-hidden">
+                                        className="relative w-full bg-gradient-to-br from-primary-900/20 to-accent-900/20 overflow-hidden" 
+                                        style={{ aspectRatio: '1200/600' }}>
                                         {blog.featuredImage ? (
                                             <img
                                                 src={blog.featuredImage}
@@ -214,6 +215,7 @@ export default function Blogs() {
                                         <div className="mt-auto">
                                             <Link
                                                 href={`/blogs/${blog.slug}`}
+                                                prefetch={true}
                                                 className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-primary-500/20 hover:bg-primary-500/30 text-primary-400 hover:text-primary-300 rounded-lg transition-all duration-300 border border-primary-500/30"
                                             >
                                                 <BookOpen className="w-4 h-4"/>
