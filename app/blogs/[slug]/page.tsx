@@ -32,80 +32,83 @@ export default function BlogDetailPage() {
     const [showLikeAnimation, setShowLikeAnimation] = useState(false)
 
 
-    useEffect(() => {
-        const fetchBlog = async () => {
-            if (!slug) return
+     useEffect(() => {
+         const fetchBlog = async () => {
+             if (!slug) return
 
-            try {
-                setError(null)
-                console.log('Fetching blog with slug:', slug)
+             try {
+                 setError(null)
+                 console.log('Fetching blog with slug:', slug)
 
-                // Fetch main blog data first (this is critical for the page)
-                const blogData = await getBlogBySlug(slug)
-                console.log('Blog data received:', blogData)
+                 // Show loading immediately
+                 setIsLoading(true)
 
-                if (blogData) {
-                    setBlog(blogData)
-                    // Check if user has already liked this blog
-                    setIsLiked(checkIfLiked(blogData.$id))
+                 // Fetch main blog data first (this is critical for the page)
+                 const blogData = await getBlogBySlug(slug)
+                 console.log('Blog data received:', blogData)
 
-                    // Set loading to false immediately after main blog data is loaded
-                    setIsLoading(false)
+                 if (blogData) {
+                     setBlog(blogData)
+                     // Check if user has already liked this blog
+                     setIsLiked(checkIfLiked(blogData.$id))
 
-                    // Start parallel fetching of additional data (non-blocking)
-                    const additionalDataPromises = []
+                     // Set loading to false immediately after main blog data is loaded
+                     setIsLoading(false)
 
-                    // Add view increment (non-blocking)
-                    additionalDataPromises.push(
-                        incrementBlogViews(blogData.$id).catch(error =>
-                            console.error('Error incrementing blog views:', error)
-                        )
-                    )
+                     // Start parallel fetching of additional data (non-blocking)
+                     const additionalDataPromises = []
 
-                    // Add related blog fetch (non-blocking)
-                    if (blogData.relatedBlog) {
-                        additionalDataPromises.push(
-                            getBlogById(blogData.relatedBlog)
-                                .then(relatedBlogData => {
-                                    if (relatedBlogData) {
-                                        setRelatedBlog(relatedBlogData)
-                                    }
-                                })
-                                .catch(error => console.error('Error fetching related blog:', error))
-                        )
-                    }
+                     // Add view increment (non-blocking)
+                     additionalDataPromises.push(
+                         incrementBlogViews(blogData.$id).catch(error =>
+                             console.error('Error incrementing blog views:', error)
+                         )
+                     )
 
-                    // Add suggested blogs fetch (non-blocking)
-                    if (blogData.suggestedReading && blogData.suggestedReading.length > 0) {
-                        additionalDataPromises.push(
-                            getBlogsByIds(blogData.suggestedReading)
-                                .then(suggestedBlogsData => {
-                                    if (suggestedBlogsData && suggestedBlogsData.length > 0) {
-                                        setSuggestedBlogs(suggestedBlogsData)
-                                    }
-                                })
-                                .catch(error => console.error('Error fetching suggested blogs:', error))
-                        )
-                    }
+                     // Add related blog fetch (non-blocking)
+                     if (blogData.relatedBlog) {
+                         additionalDataPromises.push(
+                             getBlogById(blogData.relatedBlog)
+                                 .then(relatedBlogData => {
+                                     if (relatedBlogData) {
+                                         setRelatedBlog(relatedBlogData)
+                                     }
+                                 })
+                                 .catch(error => console.error('Error fetching related blog:', error))
+                         )
+                     }
 
-                    // Wait for all additional data in parallel (but don't block the UI)
-                    Promise.all(additionalDataPromises).catch(error =>
-                        console.error('Error in additional data fetching:', error)
-                    )
-                } else {
-                    console.log('No blog found for slug:', slug)
-                    setError('Blog not found')
-                    setIsLoading(false)
-                }
-            } catch (error) {
-                console.error('Error fetching blog:', error)
-                setError('Failed to load blog')
-                setIsLoading(false)
-            }
-        }
+                     // Add suggested blogs fetch (non-blocking)
+                     if (blogData.suggestedReading && blogData.suggestedReading.length > 0) {
+                         additionalDataPromises.push(
+                             getBlogsByIds(blogData.suggestedReading)
+                                 .then(suggestedBlogsData => {
+                                     if (suggestedBlogsData && suggestedBlogsData.length > 0) {
+                                         setSuggestedBlogs(suggestedBlogsData)
+                                     }
+                                 })
+                                 .catch(error => console.error('Error fetching suggested blogs:', error))
+                         )
+                     }
 
-        fetchBlog()
-    }, [slug])
+                     // Wait for all additional data in parallel (but don't block the UI)
+                     Promise.all(additionalDataPromises).catch(error =>
+                         console.error('Error in additional data fetching:', error)
+                     )
+                 } else {
+                     console.log('No blog found for slug:', slug)
+                     setError('Blog not found')
+                     setIsLoading(false)
+                 }
+             } catch (error) {
+                 console.error('Error fetching blog:', error)
+                 setError('Failed to load blog')
+                 setIsLoading(false)
+             }
+         }
+
+         fetchBlog()
+     }, [slug])
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
@@ -169,23 +172,23 @@ export default function BlogDetailPage() {
         }
     }
 
-    if (isLoading) {
-        return (
-            <div className="bg-dark-950">
-                <div className="pt-8">
-                    <div className="container-custom section-padding">
-                        <div className="flex items-center justify-center min-h-[60vh]">
-                            <div className="text-center">
-                                <div
-                                    className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-                                <p className="text-gray-400">Loading blog post...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        )
-    }
+     if (isLoading) {
+         return (
+             <div className="bg-dark-950">
+                 <div className="pt-8">
+                     <div className="container-custom section-padding">
+                         <div className="flex items-center justify-center min-h-[60vh]">
+                             <div className="text-center">
+                                 <div
+                                     className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+                                 <p className="text-gray-400">Loading blog post...</p>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+         )
+     }
 
     if (error || !blog) {
         return (

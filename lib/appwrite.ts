@@ -161,7 +161,7 @@ export function parseBlogContent(content: string): ContentBlock[] {
         console.error('Error parsing blog content:', error)
 
         // Log error to Appwrite for debugging
-        logError(
+         logError(
             error instanceof Error ? error.message : String(error),
             'parseBlogContent',
             {
@@ -196,12 +196,34 @@ export function parseBlogContent(content: string): ContentBlock[] {
     }
 }
 
+// Client-side cache to prevent repeated API calls
+const blogCache = new Map<string, { data: any, timestamp: number }>()
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+
+function getCachedData<T>(key: string): T | null {
+    const cached = blogCache.get(key)
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        return cached.data as T
+    }
+    return null
+}
+
+function setCachedData<T>(key: string, data: T): void {
+    blogCache.set(key, { data, timestamp: Date.now() })
+}
+
 // API Functions
 
 /**
  * Get all published blogs with pagination
  */
 export async function getPublishedBlogs(limit = 10, offset = 0): Promise<BlogPost[]> {
+    const cacheKey = `blogs-${limit}-${offset}`
+    const cached = getCachedData<BlogPost[]>(cacheKey)
+    if (cached) {
+        return cached
+    }
+
     try {
         const response = await tablesDB.listRows(
             APPWRITE_DATABASE_ID,
@@ -212,7 +234,9 @@ export async function getPublishedBlogs(limit = 10, offset = 0): Promise<BlogPos
                 Query.offset(offset)
             ]
         )
-        return response.rows as unknown as BlogPost[]
+        const blogs = response.rows as unknown as BlogPost[]
+        setCachedData(cacheKey, blogs)
+        return blogs
     } catch (error) {
         console.error('Error fetching blogs:', error)
         return []
@@ -223,12 +247,17 @@ export async function getPublishedBlogs(limit = 10, offset = 0): Promise<BlogPos
  * Get a single blog post by slug
  */
 export async function getBlogBySlug(slug: string): Promise<BlogPost | null> {
+    const cacheKey = `blog-slug-${slug}`
+    const cached = getCachedData<BlogPost | null>(cacheKey)
+    if (cached !== null) {
+        return cached
+    }
+
     try {
         // Decode URL-encoded slug (spaces become %20 in URLs)
         const decodedSlug = decodeURIComponent(slug)
         console.log('getBlogBySlug called with:', slug)
         console.log('Decoded slug:', decodedSlug)
-        console.log('Using database:', APPWRITE_DATABASE_ID, 'table:', APPWRITE_BLOGS_TABLE_ID)
 
         const response = await tablesDB.listRows(
             APPWRITE_DATABASE_ID,
@@ -236,12 +265,16 @@ export async function getBlogBySlug(slug: string): Promise<BlogPost | null> {
             [Query.equal('slug', decodedSlug)]
         )
 
-        console.log('Query response:', response)
-        console.log('Number of rows found:', response.rows.length)
-
-        return response.rows[0] as unknown as BlogPost || null
+        const blog = response.rows[0] as unknown as BlogPost || null
+        setCachedData(cacheKey, blog)
+        return blog
     } catch (error) {
         console.error('Error fetching blog:', error)
+        logError(
+            error instanceof Error ? error.message : String(error),
+            'getBlogBySlug',
+            { slug, decodedSlug: decodeURIComponent(slug) }
+        )
         return null
     }
 }
@@ -250,6 +283,12 @@ export async function getBlogBySlug(slug: string): Promise<BlogPost | null> {
  * Get a single blog post by ID
  */
 export async function getBlogById(blogId: string): Promise<BlogPost | null> {
+    const cacheKey = `blog-id-${blogId}`
+    const cached = getCachedData<BlogPost | null>(cacheKey)
+    if (cached !== null) {
+        return cached
+    }
+
     try {
         const response = await tablesDB.listRows(
             APPWRITE_DATABASE_ID,
@@ -257,15 +296,23 @@ export async function getBlogById(blogId: string): Promise<BlogPost | null> {
             [Query.equal('$id', blogId)]
         )
 
-        return response.rows[0] as unknown as BlogPost || null
+        const blog = response.rows[0] as unknown as BlogPost || null
+        setCachedData(cacheKey, blog)
+        return blog
     } catch (error) {
         console.error('Error fetching blog by ID:', error)
+        logError(
+            error instanceof Error ? error.message : String(error),
+            'getBlogById',
+            { blogId }
+        )
         return null
     }
 }
 
 /**
  * Get multiple blog posts by IDs (for suggested reading)
+ * Optimized to fetch only specific blogs instead of all blogs
  */
 export async function getBlogsByIds(blogIds: string[]): Promise<BlogPost[]> {
     try {
@@ -273,17 +320,24 @@ export async function getBlogsByIds(blogIds: string[]): Promise<BlogPost[]> {
             return []
         }
 
-        // Fetch all blogs and filter by IDs
-        const response = await tablesDB.listRows(
-            APPWRITE_DATABASE_ID,
-            APPWRITE_BLOGS_TABLE_ID,
-            [Query.limit(100)] // Adjust limit as needed
+        // Fetch blogs in parallel using individual queries
+        const blogPromises = blogIds.map(blogId => 
+            tablesDB.listRows(
+                APPWRITE_DATABASE_ID,
+                APPWRITE_BLOGS_TABLE_ID,
+                [Query.equal('$id', blogId)]
+            ).then(response => response.rows[0] as unknown as BlogPost)
         )
 
-        const allBlogs = response.rows as unknown as BlogPost[]
-        return allBlogs.filter(blog => blogIds.includes(blog.$id))
+        const blogs = await Promise.all(blogPromises)
+        return blogs.filter(blog => blog !== undefined) as BlogPost[]
     } catch (error) {
         console.error('Error fetching blogs by IDs:', error)
+        logError(
+            error instanceof Error ? error.message : String(error),
+            'getBlogsByIds',
+            { blogIds, blogIdsCount: blogIds.length }
+        )
         return []
     }
 }
@@ -292,6 +346,12 @@ export async function getBlogsByIds(blogIds: string[]): Promise<BlogPost[]> {
  * Get latest blogs (for hero section)
  */
 export async function getLatestBlogs(limit = 3): Promise<BlogPost[]> {
+    const cacheKey = `latest-blogs-${limit}`
+    const cached = getCachedData<BlogPost[]>(cacheKey)
+    if (cached) {
+        return cached
+    }
+
     try {
         const response = await tablesDB.listRows(
             APPWRITE_DATABASE_ID,
@@ -301,9 +361,16 @@ export async function getLatestBlogs(limit = 3): Promise<BlogPost[]> {
                 Query.limit(limit)
             ]
         )
-        return response.rows as unknown as BlogPost[]
+        const blogs = response.rows as unknown as BlogPost[]
+        setCachedData(cacheKey, blogs)
+        return blogs
     } catch (error) {
         console.error('Error fetching latest blogs:', error)
+        logError(
+            error instanceof Error ? error.message : String(error),
+            'getLatestBlogs',
+            { limit }
+        )
         return []
     }
 }
