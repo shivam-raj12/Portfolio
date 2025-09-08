@@ -134,16 +134,29 @@ export default function BlogContentRenderer({content}: BlogContentRendererProps)
                         >
                             {parts.map((part, i) => {
                                 if (part.startsWith("`") && part.endsWith("`")) {
+                                    // Inline code
                                     return (
                                         <code
                                             key={i}
                                             className="inline-block px-2 py-1 bg-dark-800 text-gray-200 rounded-md text-sm font-mono border border-dark-700"
                                         >
-                                            {part.slice(1, -1)} {/* remove backticks */}
+                                            {part.slice(1, -1)}
                                         </code>
                                     );
+                                } else {
+                                    // For non-code parts, handle bold text
+                                    const boldParts = part.split(/(\*[^*]+\*)/g); // split by *bold*
+                                    return boldParts.map((subPart, j) => {
+                                        if (subPart.startsWith("*") && subPart.endsWith("*")) {
+                                            return (
+                                                <strong key={j} className="font-bold">
+                                                    {subPart.slice(1, -1)}
+                                                </strong>
+                                            );
+                                        }
+                                        return <span key={j}>{subPart}</span>;
+                                    });
                                 }
-                                return <span key={i}>{part}</span>;
                             })}
                         </motion.p>
                     )
@@ -257,7 +270,7 @@ export default function BlogContentRenderer({content}: BlogContentRendererProps)
                     }
 
                     // Safe array handling for list items
-                    const listItems = safeArray(block.items, ['No items available'])
+                    const listItems = safeArray(block.items, ['No items available']);
 
                     return (
                         <motion.div
@@ -268,14 +281,46 @@ export default function BlogContentRenderer({content}: BlogContentRendererProps)
                             className="mb-6"
                         >
                             <ListTag className={`space-y-2 list-inside text-gray-300 ${getListStyle(block.style)}`}>
-                                {listItems.map((item, itemIndex) => (
-                                    <li key={itemIndex} className="leading-relaxed">
-                                        {safeString(item, 'Empty item')}
-                                    </li>
-                                ))}
+                                {listItems.map((item, itemIndex) => {
+                                    const itemText = safeString(item, 'Empty item');
+
+                                    // Split by inline code first
+                                    const codeParts = itemText.split(/(`[^`]+`)/g);
+
+                                    return (
+                                        <li key={itemIndex} className="leading-relaxed">
+                                            {codeParts.map((part, i) => {
+                                                if (part.startsWith("`") && part.endsWith("`")) {
+                                                    return (
+                                                        <code
+                                                            key={i}
+                                                            className="inline-block px-1 py-0.5 bg-dark-800 text-gray-200 rounded-md text-sm font-mono border border-dark-700"
+                                                        >
+                                                            {part.slice(1, -1)}
+                                                        </code>
+                                                    );
+                                                } else {
+                                                    // Split by single asterisk for bold text
+                                                    const boldParts = part.split(/(\*[^*]+\*)/g);
+                                                    return boldParts.map((subPart, j) => {
+                                                        if (subPart.startsWith("*") && subPart.endsWith("*")) {
+                                                            return (
+                                                                <strong key={j} className="font-bold">
+                                                                    {subPart.slice(1, -1)}
+                                                                </strong>
+                                                            );
+                                                        }
+                                                        return <span key={j}>{subPart}</span>;
+                                                    });
+                                                }
+                                            })}
+                                        </li>
+                                    );
+                                })}
                             </ListTag>
                         </motion.div>
-                    )
+                    );
+
 
                 case 'quote':
                     return (
