@@ -144,22 +144,37 @@ export default function BlogContentRenderer({content}: BlogContentRendererProps)
                                         </code>
                                     );
                                 } else {
-                                    // For non-code parts, handle bold text
-                                    const boldParts = part.split(/(\*[^*]+\*)/g); // split by *bold*
-                                    return boldParts.map((subPart, j) => {
-                                        if (subPart.startsWith("*") && subPart.endsWith("*")) {
+                                    // First check italic (**word**)
+                                    const italicParts = part.split(/(\*\*[^*]+\*\*)/g);
+
+                                    return italicParts.map((italicPart, j) => {
+                                        if (italicPart.startsWith("**") && italicPart.endsWith("**")) {
                                             return (
-                                                <strong key={j} className="font-bold">
-                                                    {subPart.slice(1, -1)}
-                                                </strong>
+                                                <em key={j} className="italic">
+                                                    {italicPart.slice(2, -2)}
+                                                </em>
                                             );
+                                        } else {
+                                            // Then check bold (*word*)
+                                            const boldParts = italicPart.split(/(\*[^*]+\*)/g);
+
+                                            return boldParts.map((subPart, k) => {
+                                                if (subPart.startsWith("*") && subPart.endsWith("*")) {
+                                                    return (
+                                                        <strong key={k} className="font-bold">
+                                                            {subPart.slice(1, -1)}
+                                                        </strong>
+                                                    );
+                                                }
+                                                return <span key={k}>{subPart}</span>;
+                                            });
                                         }
-                                        return <span key={j}>{subPart}</span>;
                                     });
                                 }
                             })}
                         </motion.p>
-                    )
+                    );
+
 
                 case 'code':
                     return (
@@ -300,22 +315,37 @@ export default function BlogContentRenderer({content}: BlogContentRendererProps)
                                                         </code>
                                                     );
                                                 } else {
-                                                    // Split by single asterisk for bold text
-                                                    const boldParts = part.split(/(\*[^*]+\*)/g);
-                                                    return boldParts.map((subPart, j) => {
-                                                        if (subPart.startsWith("*") && subPart.endsWith("*")) {
+                                                    // First split for italic (**word**)
+                                                    const italicParts = part.split(/(\*\*[^*]+\*\*)/g);
+
+                                                    return italicParts.map((italicPart, j) => {
+                                                        if (italicPart.startsWith("**") && italicPart.endsWith("**")) {
                                                             return (
-                                                                <strong key={j} className="font-bold">
-                                                                    {subPart.slice(1, -1)}
-                                                                </strong>
+                                                                <em key={j} className="italic">
+                                                                    {italicPart.slice(2, -2)}
+                                                                </em>
                                                             );
+                                                        } else {
+                                                            // Then split for bold (*word*)
+                                                            const boldParts = italicPart.split(/(\*[^*]+\*)/g);
+
+                                                            return boldParts.map((subPart, k) => {
+                                                                if (subPart.startsWith("*") && subPart.endsWith("*")) {
+                                                                    return (
+                                                                        <strong key={k} className="font-bold">
+                                                                            {subPart.slice(1, -1)}
+                                                                        </strong>
+                                                                    );
+                                                                }
+                                                                return <span key={k}>{subPart}</span>;
+                                                            });
                                                         }
-                                                        return <span key={j}>{subPart}</span>;
                                                     });
                                                 }
                                             })}
                                         </li>
                                     );
+
                                 })}
                             </ListTag>
                         </motion.div>
