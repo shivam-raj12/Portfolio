@@ -38,7 +38,7 @@ export default function Skills() {
       bgColor: 'from-green-500/10 to-emerald-500/10',
       borderColor: 'border-green-500/30',
       skills: [
-        { name: 'Appwrite', icon: 'https://skillicons.dev/icons?i=appwrite', level: 'Advanced' },
+        { name: 'Appwrite', icon: '/appwrite.svg', level: 'Advanced' },
         { name: 'Firebase', icon: 'https://skillicons.dev/icons?i=firebase', level: 'Intermediate' },
         { name: 'Supabase', icon: 'https://skillicons.dev/icons?i=supabase', level: 'Learning' }
       ]
